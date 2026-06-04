@@ -1,1 +1,1 @@
-# festical_spls_2026
+# festival_spls_2026
