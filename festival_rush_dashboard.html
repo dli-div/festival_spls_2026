@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Festival Rush · Comparison Dashboard · DLI Division</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --navy-950:#06101d;
+    --navy-900:#0a1929;
+    --navy-800:#0d2137;
+    --navy-700:#11314f;
+    --navy-600:#1a4066;
+    --gold:#d4af37;
+    --gold-soft:#e6c869;
+    --gold-dim:#9a7d28;
+    --ink:#e8eef6;
+    --ink-dim:#9fb2c8;
+    --ink-faint:#6a809a;
+    --line:rgba(212,175,55,.18);
+    --east:#d4af37;
+    --west:#5b8fc9;
+    --south:#c97b5b;
+    --intra:#6aa9a0;
+    --y24:#7d8ca3;
+    --y25:#5b8fc9;
+    --y26:#d4af37;
+    --ok:#5fb878;
+    --warn:#d98a3d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'IBM Plex Sans',sans-serif;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(26,64,102,.45), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(212,175,55,.06), transparent 55%),
+      var(--navy-950);
+    color:var(--ink);
+    min-height:100vh;
+    padding:0 0 80px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1240px;margin:0 auto;padding:0 28px}
+
+  /* Header */
+  header.masthead{
+    border-bottom:1px solid var(--line);
+    padding:34px 0 26px;
+    margin-bottom:30px;
+    position:relative;
+  }
+  header.masthead::after{
+    content:"";position:absolute;left:0;bottom:-1px;height:2px;width:120px;
+    background:linear-gradient(90deg,var(--gold),transparent);
+  }
+  .kicker{
+    font-family:'Saira Condensed',sans-serif;
+    letter-spacing:.32em;text-transform:uppercase;
+    color:var(--gold);font-size:12.5px;font-weight:600;margin-bottom:10px;
+  }
+  h1{
+    font-family:'Saira Condensed',sans-serif;
+    font-weight:700;font-size:clamp(30px,4.4vw,50px);
+    line-height:.98;letter-spacing:.01em;color:var(--ink);
+  }
+  h1 .accent{color:var(--gold)}
+  .sub{color:var(--ink-dim);font-size:14.5px;margin-top:12px;max-width:680px;line-height:1.55}
+
+  /* Config banner */
+  .config-banner{
+    display:none;background:rgba(217,138,61,.12);
+    border:1px solid rgba(217,138,61,.4);border-radius:10px;
+    padding:14px 18px;margin-bottom:24px;font-size:13.5px;color:#f0cda0;line-height:1.5;
+  }
+  .config-banner code{font-family:'IBM Plex Mono',monospace;color:var(--gold-soft);font-size:12.5px}
+
+  /* Controls */
+  .controls{
+    display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;
+    background:linear-gradient(180deg,var(--navy-800),var(--navy-900));
+    border:1px solid var(--line);border-radius:14px;
+    padding:18px 20px;margin-bottom:34px;
+  }
+  .ctl{display:flex;flex-direction:column;gap:6px}
+  .ctl label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+  .ctl input[type=date],.ctl select{
+    background:var(--navy-950);border:1px solid var(--navy-600);color:var(--ink);
+    border-radius:8px;padding:9px 11px;font-family:'IBM Plex Mono',monospace;font-size:13px;
+    color-scheme:dark;min-width:150px;
+  }
+  .ctl input:focus,.ctl select:focus{outline:none;border-color:var(--gold)}
+  .toggle{display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none;padding-bottom:9px}
+  .toggle input{appearance:none;width:38px;height:21px;background:var(--navy-600);border-radius:20px;position:relative;cursor:pointer;transition:.2s}
+  .toggle input:checked{background:var(--gold-dim)}
+  .toggle input::after{content:"";position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;background:var(--ink);transition:.2s}
+  .toggle input:checked::after{left:19px;background:var(--gold-soft)}
+  .toggle span{font-size:13px;color:var(--ink-dim)}
+  .btn-rush{
+    margin-left:auto;align-self:flex-end;
+    font-family:'Saira Condensed',sans-serif;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    background:linear-gradient(135deg,var(--gold),var(--gold-dim));color:var(--navy-950);
+    border:none;border-radius:9px;padding:12px 22px;font-size:15px;cursor:pointer;
+    box-shadow:0 6px 18px rgba(212,175,55,.25);transition:.18s;
+  }
+  .btn-rush:hover{transform:translateY(-1px);box-shadow:0 9px 24px rgba(212,175,55,.35)}
+  .btn-rush.active{outline:2px solid var(--gold-soft);outline-offset:2px}
+
+  /* KPI strip */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:40px}
+  .kpi{
+    background:linear-gradient(180deg,var(--navy-800),var(--navy-900));
+    border:1px solid var(--line);border-radius:14px;padding:20px 22px;position:relative;overflow:hidden;
+  }
+  .kpi::before{content:"";position:absolute;top:0;left:0;width:3px;height:100%;background:var(--gold)}
+  .kpi .lab{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;margin-bottom:10px}
+  .kpi .val{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:36px;color:var(--gold-soft);line-height:1}
+  .kpi .meta{font-size:12px;color:var(--ink-dim);margin-top:8px}
+  .kpi.y24::before{background:var(--y24)} .kpi.y24 .val{color:#b9c4d4}
+  .kpi.y25::before{background:var(--y25)} .kpi.y25 .val{color:#9cc0ec}
+  .kpi.y26::before{background:var(--y26)}
+
+  /* Sections */
+  section.panel{
+    background:linear-gradient(180deg,rgba(13,33,55,.55),rgba(10,25,41,.55));
+    border:1px solid var(--line);border-radius:16px;padding:26px 28px 30px;margin-bottom:30px;
+  }
+  .panel-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px;flex-wrap:wrap}
+  .panel-num{font-family:'IBM Plex Mono',monospace;color:var(--gold-dim);font-size:13px;font-weight:600}
+  .panel-head h2{font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:25px;letter-spacing:.02em;color:var(--ink)}
+  .panel-desc{color:var(--ink-dim);font-size:13.5px;line-height:1.5;margin-bottom:20px;max-width:760px}
+  .panel-desc .note{color:var(--warn);font-size:12.5px}
+  .chart-box{position:relative;height:340px}
+  .chart-box.tall{height:300px}
+  .legend-row{display:flex;gap:20px;flex-wrap:wrap;margin-top:16px;font-size:12.5px;color:var(--ink-dim)}
+  .legend-row .dot{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:7px;vertical-align:middle}
+
+  /* Funnel */
+  .funnel{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+  .funnel-step{position:relative}
+  .funnel-bar{
+    height:62px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 24px;color:var(--navy-950);font-weight:600;transition:width .6s cubic-bezier(.2,.8,.2,1);
+    background:linear-gradient(135deg,var(--gold-soft),var(--gold));min-width:160px;
+  }
+  .funnel-step:nth-child(2) .funnel-bar{background:linear-gradient(135deg,#cdb04a,#a8861f)}
+  .funnel-step:nth-child(3) .funnel-bar{background:linear-gradient(135deg,#9cc0ec,#5b8fc9)}
+  .funnel-label{font-family:'Saira Condensed',sans-serif;letter-spacing:.04em;font-size:17px;text-transform:uppercase}
+  .funnel-val{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600}
+  .funnel-drop{font-size:11.5px;color:var(--ink-faint);margin-top:5px;padding-left:4px;font-family:'IBM Plex Mono',monospace}
+
+  /* window readout */
+  .windows{display:flex;gap:22px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px dashed var(--line)}
+  .win{font-size:12px;color:var(--ink-dim)}
+  .win b{color:var(--gold-soft);font-family:'IBM Plex Mono',monospace;font-weight:500;display:block;margin-top:3px}
+
+  .footer-note{color:var(--ink-faint);font-size:12px;text-align:center;margin-top:36px;line-height:1.6}
+  .footer-note code{font-family:'IBM Plex Mono',monospace;color:var(--gold-dim)}
+
+  @media(max-width:880px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .btn-rush{margin-left:0;width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="kicker">Indian Railways · Delhi Division · Festival Rush 2026</div>
+    <h1>Chhath &amp; Diwali <span class="accent">Comparison</span> Dashboard</h1>
+    <p class="sub">Year-on-year view of special-train running across the festival rush — 2024 critical-period counts, 2025 notified actuals, and the live 2026 proposal funnel — aligned by day-offset from Diwali.</p>
+  </header>
+
+  <div class="config-banner" id="configBanner">
+    ⚠ <b>Data source not configured.</b> Open this file and fill the <code>CONFIG</code> block at the top of the script with your <code>apiKey</code>, <code>sheet2025Id</code> and <code>sheet2026Id</code> (paste them from your existing dashboard). The 2024 figures below are hardcoded and will show regardless; 2025/2026 charts populate once the sheets are reachable.
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="ctl">
+      <label>From</label>
+      <input type="date" id="fromDate">
+    </div>
+    <div class="ctl">
+      <label>To</label>
+      <input type="date" id="toDate">
+    </div>
+    <div class="ctl">
+      <label>Direction focus</label>
+      <select id="dirFilter">
+        <option value="east">East Bound (primary)</option>
+        <option value="all">All directions</option>
+        <option value="west">West Bound</option>
+        <option value="south">South Bound</option>
+        <option value="intra">Intra Division</option>
+      </select>
+    </div>
+    <label class="toggle"><input type="checkbox" id="cloneToggle"><span>Include Clone trains</span></label>
+    <label class="toggle"><input type="checkbox" id="passingToggle" checked><span>Include Passing</span></label>
+    <button class="btn-rush" id="rushBtn">★ Festival Rush</button>
+  </div>
+
+  <!-- KPI strip -->
+  <div class="kpis" id="kpiStrip">
+    <div class="kpi y24"><div class="lab">2024 · East-bound</div><div class="val" id="kpi24">257</div><div class="meta">critical window · 27 UN/RES incl.</div></div>
+    <div class="kpi y25"><div class="lab">2025 · Notified runs</div><div class="val" id="kpi25">—</div><div class="meta" id="kpi25m">awaiting data</div></div>
+    <div class="kpi y26"><div class="lab">2026 · Feasible runs</div><div class="val" id="kpi26">—</div><div class="meta" id="kpi26m">awaiting data</div></div>
+    <div class="kpi"><div class="lab">2026 vs 2025</div><div class="val" id="kpiDelta">—</div><div class="meta">change in runs</div></div>
+  </div>
+
+  <!-- Section 1: Day by day -->
+  <section class="panel">
+    <div class="panel-head"><span class="panel-num">01</span><h2>Daily load — D-5 to D+7</h2></div>
+    <p class="panel-desc">Trains per day across the rush, aligned by offset from each year's Diwali (D-0). The window runs from five days before Diwali through the day before Chhath. <span class="note">2024 = East-bound critical counts (totals include on-the-spot UN/RES, not additive).</span></p>
+    <div class="chart-box"><canvas id="chartDaily"></canvas></div>
+    <div class="legend-row">
+      <span><i class="dot" style="background:var(--y24)"></i>2024</span>
+      <span><i class="dot" style="background:var(--y25)"></i>2025</span>
+      <span><i class="dot" style="background:var(--y26)"></i>2026 (proposed)</span>
+    </div>
+    <div class="windows" id="winReadout"></div>
+  </section>
+
+  <!-- Section 2: By terminal -->
+  <section class="panel">
+    <div class="panel-head"><span class="panel-num">02</span><h2>By originating terminal</h2></div>
+    <p class="panel-desc">Runs over the DLI division by terminal across the selected window. <span class="note">2024 had no terminal-level breakdown, so this compares 2025 actuals against 2026 proposals only. 2026 terminal is derived from the From / Passing-Terminal columns — confirm mapping.</span></p>
+    <div class="chart-box"><canvas id="chartTerminal"></canvas></div>
+    <div class="legend-row">
+      <span><i class="dot" style="background:var(--y25)"></i>2025</span>
+      <span><i class="dot" style="background:var(--y26)"></i>2026 (proposed)</span>
+    </div>
+  </section>
+
+  <!-- Section 3: 2026 funnel -->
+  <section class="panel">
+    <div class="panel-head"><span class="panel-num">03</span><h2>2026 proposal funnel</h2></div>
+    <p class="panel-desc">The live pipeline from the Proposal sheet — proposals received, examined &amp; found feasible at DLI, and finally notified. Counted as distinct proposal rows.</p>
+    <div class="funnel" id="funnel">
+      <div class="funnel-step"><div class="funnel-bar" id="fnRecv" style="width:100%"><span class="funnel-label">Proposals received</span><span class="funnel-val">—</span></div></div>
+      <div class="funnel-step"><div class="funnel-bar" id="fnFeas" style="width:66%"><span class="funnel-label">Feasible at DLI</span><span class="funnel-val">—</span></div><div class="funnel-drop" id="fnFeasDrop"></div></div>
+      <div class="funnel-step"><div class="funnel-bar" id="fnNotif" style="width:40%"><span class="funnel-label">Notified</span><span class="funnel-val">—</span></div><div class="funnel-drop" id="fnNotifDrop"></div></div>
+    </div>
+  </section>
+
+  <!-- Section 4: By direction -->
+  <section class="panel">
+    <div class="panel-head"><span class="panel-num">04</span><h2>By bound direction</h2></div>
+    <p class="panel-desc">Directional split across the window. <span class="note">2024 detail exists for East-bound only (257 of 267 total); other directions shown where data exists.</span></p>
+    <div class="chart-box"><canvas id="chartDir"></canvas></div>
+    <div class="legend-row">
+      <span><i class="dot" style="background:var(--y24)"></i>2024</span>
+      <span><i class="dot" style="background:var(--y25)"></i>2025</span>
+      <span><i class="dot" style="background:var(--y26)"></i>2026 (proposed)</span>
+    </div>
+  </section>
+
+  <div class="footer-note">
+    Dates fetched as serial numbers (<code>dateTimeRenderOption=SERIAL_NUMBER</code>) — immune to dd/mm vs mm/dd.<br>
+    Workbook: <code>Chatt_Diwali_Festival_SPLs_2026</code> · 2025 master: <code>Chat-Diwali-All-SCN</code> · DLI Division festival-rush planning.
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   CONFIG  —  fill these three values from your existing dashboard
+   ============================================================ */
+const CONFIG = {
+  apiKey:      "YOUR_API_KEY",        // ← paste your Google Sheets API key
+  sheet2025Id: "YOUR_2025_SHEET_ID",  // ← Chat-Diwali-All-SCN spreadsheet ID
+  sheet2026Id: "YOUR_2026_SHEET_ID",  // ← Chatt_Diwali_Festival_SPLs_2026 spreadsheet ID
+  tab2025: "Master_Data_Originating_Passing",
+  tab2026: "Proposal",
+};
+
+/* Festival anchors. Chhath = Diwali + 8 days (Usha Arghya). Window = D-5 .. D+7. */
+const FEST = {
+  2024: { diwali: "2024-10-31", chhath: "2024-11-08" },
+  2025: { diwali: "2025-10-20", chhath: "2025-10-28" },
+  2026: { diwali: "2026-11-08", chhath: "2026-11-16" },
+};
+const TERMINALS = ["ANVT","NDLS","DLI","NZM","ROK","SSB","DEE"];
+
+/* 2024 hardcoded East-bound critical counts, D-5 .. D+7 (totals incl. UN/RES) */
+const HARD2024 = { east:[13,13,20,20,22,17,24,22,19,30,24,16,17], eastTotal:257, allTotal:267, unres:27 };
+
+/* ---------- helpers ---------- */
+const dayLabels = ["D-5","D-4","D-3","D-2","D-1","D-0","D+1","D+2","D+3","D+4","D+5","D+6","D+7"];
+const pad=n=>String(n).padStart(2,"0");
+const isoOf=d=>`${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`;
+function addDays(iso,n){const d=new Date(iso+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d;}
+function serialToDate(s){return new Date(Date.UTC(1899,11,30)+Math.round(Number(s))*86400000);}
+function dayKey(d){return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`;}
+function jsToRailDay(d){const w=d.getUTCDay();return w===0?7:w;} // Mon=1..Sun=7
+
+/* window of 13 calendar dates for a year (D-5..D+7 from that year's Diwali) */
+function windowDates(year){
+  const diw=FEST[year].diwali; const out=[];
+  for(let off=-5;off<=7;off++) out.push(dayKey(addDays(diw,off)));
+  return out;
+}
+
+/* parse Day Of Run cell -> set of rail-day numbers (1..7). Handles "1,2,3", "Daily", names. */
+function parseDaysOfRun(v){
+  if(v===undefined||v===null||v==="") return new Set([1,2,3,4,5,6,7]);
+  const s=String(v).trim().toLowerCase();
+  if(s==="daily"||s==="all"||s==="everyday") return new Set([1,2,3,4,5,6,7]);
+  const nameMap={mon:1,tue:2,wed:3,thu:4,fri:5,sat:6,sun:7};
+  const set=new Set();
+  s.split(/[,\s/&]+/).forEach(tok=>{
+    tok=tok.trim(); if(!tok) return;
+    if(/^[1-7]$/.test(tok)) set.add(Number(tok));
+    else { const k=tok.slice(0,3); if(nameMap[k]) set.add(nameMap[k]); }
+  });
+  return set.size?set:new Set([1,2,3,4,5,6,7]);
+}
+
+function classifyDir(raw){
+  const s=String(raw||"").toLowerCase();
+  if(s.includes("east")) return "east";
+  if(s.includes("west")) return "west";
+  if(s.includes("south")) return "south";
+  if(s.includes("intra")) return "intra";
+  return "other";
+}
+function classifyTerminal(raw){
+  const s=String(raw||"").toUpperCase();
+  for(const t of TERMINALS) if(s.includes(t)) return t;
+  return "Other";
+}
+
+/* ---------- data fetch ---------- */
+async function fetchSheet(id,tab){
+  const url=`https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${encodeURIComponent(tab)}`
+    +`?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER&key=${CONFIG.apiKey}`;
+  const r=await fetch(url);
+  if(!r.ok) throw new Error(`${tab}: ${r.status}`);
+  const j=await r.json();
+  return j.values||[];
+}
+
+/* ---------- state ---------- */
+let STATE = { rows2025:null, rows2026:null, custom:null };
+
+function getFilters(){
+  return {
+    dir: document.getElementById("dirFilter").value,
+    clone: document.getElementById("cloneToggle").checked,
+    passing: document.getElementById("passingToggle").checked,
+  };
+}
+function statusAllowed(status, f){
+  const s=String(status||"").toLowerCase();
+  if(s.includes("terminat")) return false;            // always ignore
+  if(s.includes("clone")) return f.clone;             // toggle
+  if(s.includes("pass")) return f.passing;            // toggle
+  return true; // originating / blank
+}
+function dirAllowed(dir,f){ return f.dir==="all" ? true : classifyDir(dir)===f.dir; }
+
+/* ===== 2025 per-date counts over a list of dates ===== */
+function count2025ByDate(dates,f){
+  const map={}; dates.forEach(d=>map[d]=0);
+  if(!STATE.rows2025) return {map,total:0};
+  let total=0;
+  for(let i=1;i<STATE.rows2025.length;i++){
+    const r=STATE.rows2025[i]; if(!r||!r[2]) continue;       // col C train no
+    if(!statusAllowed(r[11],f)) continue;                    // col L
+    if(!dirAllowed(r[10],f)) continue;                       // col K
+    const dk=dayKey(serialToDate(r[7]));                     // col H date
+    if(dk in map){ map[dk]++; total++; }
+  }
+  return {map,total};
+}
+function count2025ByTerminal(dates,f){
+  const out={}; TERMINALS.forEach(t=>out[t]=0); out.Other=0;
+  if(!STATE.rows2025) return out;
+  const dset=new Set(dates);
+  for(let i=1;i<STATE.rows2025.length;i++){
+    const r=STATE.rows2025[i]; if(!r||!r[2]) continue;
+    if(!statusAllowed(r[11],f)) continue;
+    if(!dirAllowed(r[10],f)) continue;
+    if(!dset.has(dayKey(serialToDate(r[7])))) continue;
+    out[classifyTerminal(r[8])]++;                           // col I terminal
+  }
+  return out;
+}
+function count2025ByDir(dates){
+  const out={east:0,west:0,south:0,intra:0};
+  if(!STATE.rows2025) return out;
+  const f={dir:"all",clone:document.getElementById("cloneToggle").checked,passing:document.getElementById("passingToggle").checked};
+  const dset=new Set(dates);
+  for(let i=1;i<STATE.rows2025.length;i++){
+    const r=STATE.rows2025[i]; if(!r||!r[2]) continue;
+    if(!statusAllowed(r[11],f)) continue;
+    if(!dset.has(dayKey(serialToDate(r[7])))) continue;
+    const c=classifyDir(r[10]); if(c in out) out[c]++;
+  }
+  return out;
+}
+
+/* ===== 2026 expansion: feasibility-based, independent of notified ===== */
+/* cols: B=1 train, F=5 from, G=6 till, I=8 dayofrun, O=14 feasible, R=17 dir, S=18 status, C=2 from-stn, X=23 passing-term */
+function count2026ByDate(dates,f){
+  const map={}; dates.forEach(d=>map[d]=0);
+  if(!STATE.rows2026) return {map,total:0};
+  const dset=new Set(dates); let total=0;
+  for(let i=1;i<STATE.rows2026.length;i++){
+    const r=STATE.rows2026[i]; if(!r||!r[1]) continue;       // train no
+    if(String(r[14]||"").toLowerCase()!=="yes") continue;    // feasible col O
+    if(!statusAllowed(r[18],f)) continue;                    // col S
+    if(!dirAllowed(r[17],f)) continue;                       // col R
+    if(r[5]===""||r[6]==="") continue;
+    const from=serialToDate(r[5]), till=serialToDate(r[6]);  // F,G
+    const runDays=parseDaysOfRun(r[8]);                      // I
+    for(const dk of dates){
+      const d=new Date(dk+"T00:00:00Z");
+      if(d>=from && d<=till && runDays.has(jsToRailDay(d))){ map[dk]++; total++; }
+    }
+  }
+  return {map,total};
+}
+function count2026ByTerminal(dates,f){
+  const out={}; TERMINALS.forEach(t=>out[t]=0); out.Other=0;
+  if(!STATE.rows2026) return out;
+  for(let i=1;i<STATE.rows2026.length;i++){
+    const r=STATE.rows2026[i]; if(!r||!r[1]) continue;
+    if(String(r[14]||"").toLowerCase()!=="yes") continue;
+    if(!statusAllowed(r[18],f)) continue;
+    if(!dirAllowed(r[17],f)) continue;
+    if(r[5]===""||r[6]==="") continue;
+    const from=serialToDate(r[5]),till=serialToDate(r[6]),runDays=parseDaysOfRun(r[8]);
+    const isPassing=String(r[18]||"").toLowerCase().includes("pass");
+    const term=classifyTerminal(isPassing?r[23]:r[2]);       // X for passing, C (from) for originating
+    let trips=0;
+    for(const dk of dates){const d=new Date(dk+"T00:00:00Z");if(d>=from&&d<=till&&runDays.has(jsToRailDay(d)))trips++;}
+    out[term]+=trips;
+  }
+  return out;
+}
+function count2026ByDir(dates){
+  const out={east:0,west:0,south:0,intra:0};
+  if(!STATE.rows2026) return out;
+  const f={dir:"all",clone:document.getElementById("cloneToggle").checked,passing:document.getElementById("passingToggle").checked};
+  for(let i=1;i<STATE.rows2026.length;i++){
+    const r=STATE.rows2026[i]; if(!r||!r[1]) continue;
+    if(String(r[14]||"").toLowerCase()!=="yes") continue;
+    if(!statusAllowed(r[18],f)) continue;
+    if(r[5]===""||r[6]==="") continue;
+    const from=serialToDate(r[5]),till=serialToDate(r[6]),runDays=parseDaysOfRun(r[8]);
+    const c=classifyDir(r[17]); if(!(c in out)) continue;
+    for(const dk of dates){const d=new Date(dk+"T00:00:00Z");if(d>=from&&d<=till&&runDays.has(jsToRailDay(d)))out[c]++;}
+  }
+  return out;
+}
+function funnel2026(){
+  let recv=0,feas=0,notif=0;
+  if(!STATE.rows2026) return {recv,feas,notif};
+  for(let i=1;i<STATE.rows2026.length;i++){
+    const r=STATE.rows2026[i]; if(!r||!r[1]) continue;
+    recv++;
+    if(String(r[14]||"").toLowerCase()==="yes") feas++;       // O
+    if(String(r[21]||"").toLowerCase()==="yes") notif++;      // V whether notified
+  }
+  return {recv,feas,notif};
+}
+
+/* ---------- charts ---------- */
+let charts={};
+const gridCol="rgba(212,175,55,.08)", tickCol="#9fb2c8";
+const baseOpts=(stack=false)=>({
+  responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{
+    backgroundColor:"#06101d",borderColor:"#d4af37",borderWidth:1,titleColor:"#e6c869",bodyColor:"#e8eef6",padding:10
+  }},
+  scales:{
+    x:{stacked:stack,grid:{color:gridCol},ticks:{color:tickCol,font:{family:"IBM Plex Mono",size:11}}},
+    y:{stacked:stack,grid:{color:gridCol},ticks:{color:tickCol,font:{family:"IBM Plex Mono",size:11}},beginAtZero:true}
+  }
+});
+function mkBar(id,labels,datasets,stack=false){
+  if(charts[id]) charts[id].destroy();
+  charts[id]=new Chart(document.getElementById(id),{type:"bar",data:{labels,datasets},options:baseOpts(stack)});
+}
+
+/* ---------- render ---------- */
+function render(){
+  const f=getFilters();
+  const useCustom = STATE.custom!==null;
+  // For day-by-day we always align by offset across the three years' own windows.
+  const dates25=windowDates(2025), dates26=windowDates(2026);
+
+  // ---- Section 1: daily ----
+  const c25=count2025ByDate(dates25,f), c26=count2026ByDate(dates26,f);
+  const arr25=dates25.map(d=>c25.map[d]), arr26=dates26.map(d=>c26.map[d]);
+  const arr24=(f.dir==="east"||f.dir==="all")?HARD2024.east:dayLabels.map(()=>null);
+  mkBar("chartDaily",dayLabels,[
+    {label:"2024",data:arr24,backgroundColor:"#7d8ca3",borderRadius:3,barPercentage:.78,categoryPercentage:.7},
+    {label:"2025",data:arr25,backgroundColor:"#5b8fc9",borderRadius:3,barPercentage:.78,categoryPercentage:.7},
+    {label:"2026",data:arr26,backgroundColor:"#d4af37",borderRadius:3,barPercentage:.78,categoryPercentage:.7},
+  ]);
+
+  // window readout
+  const wr=document.getElementById("winReadout");
+  const fmt=(y)=>{const w=windowDates(y);return `${w[0]} → ${w[12]}`;};
+  wr.innerHTML=`
+    <div class="win">2024 window<b>${fmt(2024)}</b></div>
+    <div class="win">2025 window<b>${fmt(2025)}</b></div>
+    <div class="win">2026 window<b>${fmt(2026)}</b></div>`;
+
+  // ---- KPIs ----
+  document.getElementById("kpi24").textContent = (f.dir==="east"||f.dir==="all")?HARD2024.eastTotal:"—";
+  document.getElementById("kpi25").textContent = STATE.rows2025?c25.total:"—";
+  document.getElementById("kpi26").textContent = STATE.rows2026?c26.total:"—";
+  document.getElementById("kpi25m").textContent = STATE.rows2025?"festival-rush window":"awaiting data";
+  document.getElementById("kpi26m").textContent = STATE.rows2026?"feasible · window":"awaiting data";
+  if(STATE.rows2025&&STATE.rows2026){
+    const d=c26.total-c25.total;
+    document.getElementById("kpiDelta").textContent=(d>=0?"+":"")+d;
+  }
+
+  // ---- Section 2: terminal ----
+  const t25=count2025ByTerminal(dates25,f), t26=count2026ByTerminal(dates26,f);
+  mkBar("chartTerminal",TERMINALS,[
+    {label:"2025",data:TERMINALS.map(t=>t25[t]),backgroundColor:"#5b8fc9",borderRadius:3,barPercentage:.8,categoryPercentage:.66},
+    {label:"2026",data:TERMINALS.map(t=>t26[t]),backgroundColor:"#d4af37",borderRadius:3,barPercentage:.8,categoryPercentage:.66},
+  ]);
+
+  // ---- Section 3: funnel ----
+  const fn=funnel2026();
+  const setStep=(id,val,base)=>{const el=document.getElementById(id);el.querySelector(".funnel-val").textContent=STATE.rows2026?val:"—";if(base>0)el.style.width=Math.max(28,Math.round(val/base*100))+"%";};
+  setStep("fnRecv",fn.recv,fn.recv||1);
+  setStep("fnFeas",fn.feas,fn.recv||1);
+  setStep("fnNotif",fn.notif,fn.recv||1);
+  if(STATE.rows2026){
+    document.getElementById("fnFeasDrop").textContent = `${fn.recv-fn.feas} not feasible (${fn.recv?Math.round((fn.recv-fn.feas)/fn.recv*100):0}% drop)`;
+    document.getElementById("fnNotifDrop").textContent = `${fn.feas-fn.notif} feasible but not yet notified`;
+  }
+
+  // ---- Section 4: direction ----
+  const d25=count2025ByDir(dates25), d26=count2026ByDir(dates26);
+  const dirLabels=["East","West","South","Intra Div"];
+  const keys=["east","west","south","intra"];
+  const d24=[HARD2024.eastTotal,null,null,null];
+  mkBar("chartDir",dirLabels,[
+    {label:"2024",data:d24,backgroundColor:"#7d8ca3",borderRadius:3,barPercentage:.8,categoryPercentage:.7},
+    {label:"2025",data:keys.map(k=>d25[k]),backgroundColor:"#5b8fc9",borderRadius:3,barPercentage:.8,categoryPercentage:.7},
+    {label:"2026",data:keys.map(k=>d26[k]),backgroundColor:"#d4af37",borderRadius:3,barPercentage:.8,categoryPercentage:.7},
+  ]);
+}
+
+/* ---------- init ---------- */
+function setDefaultDates(){
+  const w=windowDates(2026);
+  document.getElementById("fromDate").value=w[0];
+  document.getElementById("toDate").value=w[12];
+}
+function wireControls(){
+  ["dirFilter","cloneToggle","passingToggle"].forEach(id=>document.getElementById(id).addEventListener("change",render));
+  document.getElementById("rushBtn").addEventListener("click",()=>{
+    document.getElementById("rushBtn").classList.toggle("active");
+    setDefaultDates(); STATE.custom=null; render();
+  });
+  ["fromDate","toDate"].forEach(id=>document.getElementById(id).addEventListener("change",()=>{STATE.custom=true;render();}));
+}
+
+async function boot(){
+  setDefaultDates(); wireControls(); render();
+  const configured = CONFIG.apiKey!=="YOUR_API_KEY" && CONFIG.sheet2025Id!=="YOUR_2025_SHEET_ID";
+  if(!configured){ document.getElementById("configBanner").style.display="block"; return; }
+  try{
+    const [r25,r26]=await Promise.all([
+      fetchSheet(CONFIG.sheet2025Id,CONFIG.tab2025).catch(e=>{console.warn(e);return null;}),
+      fetchSheet(CONFIG.sheet2026Id,CONFIG.tab2026).catch(e=>{console.warn(e);return null;}),
+    ]);
+    STATE.rows2025=r25; STATE.rows2026=r26; render();
+  }catch(e){
+    console.error(e); document.getElementById("configBanner").style.display="block";
+  }
+}
+boot();
+</script>
+</body>
+</html>
